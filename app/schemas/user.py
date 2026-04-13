@@ -1,7 +1,7 @@
 # app/schemas/user.py
 from typing import Optional, List
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, date
 
 
 class UserProfileResponse(BaseModel):
@@ -54,9 +54,9 @@ class TicketResponse(BaseModel):
 class PurchaseMovieInfo(BaseModel):
     id: int
     title: str
-    genre: str
-    duration: int
-    poster_url: str
+    genre: Optional[str] = None
+    duration: Optional[int] = None
+    poster_url: Optional[str] = None
 
 
 class MyPurchaseResponse(BaseModel):
@@ -66,8 +66,11 @@ class MyPurchaseResponse(BaseModel):
     quantity: int
     total_amount: float
     status: str
+    payment_info: Optional[dict] = None
     tickets: List[TicketResponse]
     created_at: datetime
+    show_date: Optional[date] = None
+    show_time: Optional[str] = None
 
     @classmethod
     def from_orm(cls, p):
@@ -87,6 +90,9 @@ class MyPurchaseResponse(BaseModel):
             quantity=p.quantity,
             total_amount=p.total_amount,
             status=p.status.value if hasattr(p.status, "value") else p.status,
+            payment_info=p.payment_info,
             tickets=[TicketResponse.from_orm(t) for t in p.tickets],
             created_at=p.created_at,
+            show_date=p.show_date,
+            show_time=p.show_time,
         )

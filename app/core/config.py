@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
     REDIS_URL: str = ""
+    AUTH_SERVICE_URL: str = "http://cineco-auth:8005"
 
     # Kafka — consume user.registered para poblar perfiles
     KAFKA_ENABLED: bool = False

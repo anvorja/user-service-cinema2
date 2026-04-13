@@ -1,6 +1,7 @@
 # app/models/purchase.py
 import enum
-from sqlalchemy import String, Integer, Float, ForeignKey, JSON, Enum
+from datetime import date as date_type
+from sqlalchemy import String, Integer, Float, ForeignKey, JSON, Enum, Date
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List, Optional, Dict, Any, TYPE_CHECKING
 
@@ -35,8 +36,10 @@ class Purchase(BaseModel):
     status: Mapped[PurchaseStatus] = mapped_column(
         Enum(PurchaseStatus), default=PurchaseStatus.PENDING, nullable=False, index=True
     )
+    show_date: Mapped[Optional[date_type]] = mapped_column(Date, nullable=True)
+    show_time: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
 
-    user: Mapped["User"] = relationship(back_populates="purchases")
+    user: Mapped["User"] = relationship()
     movie: Mapped["Movie"] = relationship(back_populates="purchases")
     tickets: Mapped[List["Ticket"]] = relationship(back_populates="purchase", cascade="all, delete-orphan")
 

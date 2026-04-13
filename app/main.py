@@ -28,9 +28,10 @@ async def lifespan(_: FastAPI):
     global _consumer_task
     logger.info("User Service starting...")
 
-    # Crear tablas en cinema_users si no existen
-    from app.models.base import Base
-    Base.metadata.create_all(bind=engine)
+    # Crear solo la tabla users en cinema_users (los modelos de booking son
+    # read-only y viven en cinema_booking — no se deben crear aquí).
+    from app.models.user import User
+    User.__table__.create(bind=engine, checkfirst=True)
 
     # Kafka: producer (publica user.deactivated) + consumer (recibe user.registered)
     from app.kafka.producer import start_producer, stop_producer

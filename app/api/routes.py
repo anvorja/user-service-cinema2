@@ -1,11 +1,14 @@
 # app/api/routes.py
 from typing import List
 
-from fastapi import APIRouter, Depends, Query, status
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.config import settings
 from app.core.database import get_db, get_booking_db
-from app.api.dependencies import get_current_user
+from app.api.dependencies import get_current_user, get_current_token
 from app.models.user import User
 from app.models.purchase import Purchase
 from app.models.movie import Movie
@@ -42,6 +45,36 @@ async def delete_account(
     auth-service desactiva en cinema_auth para bloquear futuros logins.
     """
     await UserService.delete_account(db, current_user.id)
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str = Field(..., description="Contraseña actual")
+    new_password: str = Field(..., min_length=6, description="Nueva contraseña (mínimo 6 caracteres)")
+
+
+@router.put("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    data: PasswordChangeRequest,
+    token: str = Depends(get_current_token),
+    _: User = Depends(get_current_user),
+):
+    """
+    Cambiar contraseña del usuario autenticado.
+    Delega la validación y actualización a auth-service, que es el dueño de las credenciales.
+    """
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.put(
+            f"{settings.AUTH_SERVICE_URL}/api/v1/auth/password",
+            json={"current_password": data.current_password, "new_password": data.new_password},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    if resp.status_code == status.HTTP_400_BAD_REQUEST:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, resp.json().get("detail", "Contraseña actual incorrecta"))
+    if resp.status_code == status.HTTP_401_UNAUTHORIZED:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "No autorizado")
+    if resp.status_code not in (status.HTTP_204_NO_CONTENT, status.HTTP_200_OK):
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Error al cambiar la contraseña. Intenta de nuevo.")
 
 
 @router.get("/me/purchases", response_model=List[MyPurchaseResponse])
