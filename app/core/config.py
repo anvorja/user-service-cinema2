@@ -21,10 +21,7 @@ class Settings(BaseSettings):
     KAFKA_API_KEY: str = ""
     KAFKA_API_SECRET: str = ""
 
-    BACKEND_CORS_ORIGINS: List[str] = [
-        "http://localhost:8090",
-        "http://localhost:5173",
-    ]
+    BACKEND_CORS_ORIGINS: List[str] = ["*"]
     DEBUG: bool = False
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
