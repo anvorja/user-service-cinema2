@@ -59,3 +59,7 @@ class Ticket(BaseModel):
     )
 
     purchase: Mapped["Purchase"] = relationship(back_populates="tickets")
+
+    @property
+    def is_active(self) -> bool:
+        return self.status == TicketStatus.ACTIVE
